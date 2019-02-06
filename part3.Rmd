@@ -1,0 +1,93 @@
+---
+title: "R Notebook"
+output:
+  html_document:
+    df_print: paged
+---
+
+#Part 3 Visualizing and Mapping
+
+##3.1 Introduction
+This project will be investigating the employment statistics of Seattle, WA. 
+
+This data for this analysis is being gathered from the [Longitudinal Employer-Household Dynamics(LEHD)](https://lehd.ces.census.gov/data/#lodes) section from the United States Census Bureau. We will be specifically looking into the LEHD Origin-Destination Employment Statistics (LODES). There are three files we need to complete this: the Origin-Destination (OD), Residence Area Characteristics (RAC), and the Workplace Area Characteristics (WAC). Metadata for these files can be found [here](https://lehd.ces.census.gov/data/lodes/LODES7/LODESTechDoc7.3.pdf).
+
+* Definition of Each File
+  + Origin-Destination (OD): This file contains the relationships between where people reside, and where people go to work. 
+  + Residence Area Characteristics (RAC): This file contains the residential characteristics of a block.
+  + Workplace Area Characteristics (WAC): This file contains the workplace characteristics of a block.
+  
+The American decennial census is a massive undertaking that requires a large budget and years of planning. To account for a growing population and a large amount of data to be gathered, the budget for the census has increased "96% from 1997 to 1998, and more than 60% from 2007 to 2008"(brookings.edu). Following the pattern, the budget would need to rise again for the 2020 Census, however "Congress decreed that the 2020 Census should cost no more than the 2010 count without adjusting for inflation" is where the Census Bureau would run into problems ( [Shapiro, Robert](https://www.brookings.edu/blog/fixgov/2017/08/31/the-2020-census-may-be-wildly-inaccurate-and-it-matters-more-than-you-think/) ). This means cutting down on renting building and employees which can affect the accuracy of the census. Furthermore, the questions themselves can cause doubt in census findings. For example when considering race, the Census Bureau tested a question about reporting of origin race, and many people responded as having two origin races, for example mixed ethnicities like hispanic and white, under the census' terms, will be categorized as only hispanic ( [Alba, Richard](https://www.washingtonpost.com/news/monkey-cage/wp/2018/02/06/theres-a-big-problem-with-how-the-census-measures-race/?noredirect=on&utm_term=.22f4516ef859) ). 
+
+
+The area that we have chosen for analysis is the city of Seattle. We have chosen this area since all of us are familiar with the area, and also Seattle is a very large city with both urban and suburban elements. Analyzing the residential and workplace characteristics would show interesting patterns that people are unable to see from the surface. In the following visualizations, we can see that there are not many jobs that make over $3333/month ($40,000/year) for African Americans or College Graduates. For these two groups, this may be unappealing to move to the area to look for jobs, and they may look elsewhere. 
+
+###Works Cited
+
+[Shapiro, Robert. "The 2020 Census May Be Wildly Inaccurate-and It Matters More than You Think." Brookings.edu, The Brookings Institution, 31 Aug. 2017, www.brookings.edu/blog/fixgov/2017/08/31/the-2020-census-may-be-wildly-inaccurate-and-it-matters-more-than-you-think/.](https://www.brookings.edu/blog/fixgov/2017/08/31/the-2020-census-may-be-wildly-inaccurate-and-it-matters-more-than-you-think/)
+
+[Alba, Richard. "There's a Big Problem with How the Census Measures Race." The Washington Post, WP Company, 6 Feb. 2018, www.washingtonpost.com/news/monkey-cage/wp/2018/02/06/theres-a-big-problem-with-how-the-census-measures-race/?noredirect=on&utm_term=.22f4516ef859.](https://www.washingtonpost.com/news/monkey-cage/wp/2018/02/06/theres-a-big-problem-with-how-the-census-measures-race/?noredirect=on&utm_term=.22f4516ef859)
+
+##3.2 Visualizations
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+#***** PART 2: Data Processing *****#
+
+# Use library
+library(dplyr)
+library(tidyverse)
+
+##### WAC #####
+
+# Input WAC dataset and clean up table
+wac <- read.csv("wa_wac_S000_JT00_2015.csv", stringsAsFactors = FALSE, fileEncoding = "latin1")
+wac$w_geocode <- as.character(wac$w_geocode)
+wac$w_geocode[which(length(wac$w_geocode) == 14)] <- paste0("0",wac$w_geocode[which(length(wac$w_geocode) == 14)])
+wac$createdate <- NULL
+
+# Convert specific columns to numeric
+wacid <- 2:52
+wac[wacid] <-  data.matrix(wac[wacid])
+sapply(wac, class)
+
+# Modify column for tract code
+wac$w_geocode <- substr(wac$w_geocode, 1, 11)
+
+# Aggregate by the tract_geocode column
+wac_tract_group <- aggregate(. ~ wac$w_geocode, data = wac[wacid], FUN = sum)
+
+# Create a new csv file for tracts
+write.csv(wac_tract_group, "wa_wac_S000_JT00_2015_tract.csv")
+
+##### RAC #####
+
+# Input RAC dataset and clean up table
+rac <- read.csv("wa_rac_S000_JT00_2015.csv", stringsAsFactors = FALSE, fileEncoding = "latin1")
+rac$h_geocode <- as.character(rac$h_geocode)
+rac$h_geocode[which(length(rac$h_geocode) == 14)] <- paste0("0",rac$h_geocode[which(length(rac$h_geocode) == 14)])
+rac$createdate <- NULL
+
+# Convert specific columns to numeric
+racid <- 2:42
+rac[racid] <-  data.matrix(rac[racid])
+sapply(rac, class)
+
+# Modify column for tract code
+rac$h_geocode <- substr(rac$h_geocode, 1, 11)
+
+# Aggregate by the tract_geocode column
+rac_tract_group <- aggregate(. ~ rac$h_geocode, data = rac[racid], FUN = sum)
+
+# Create a new csv file for tracts
+write.csv(rac_tract_group, "wa_rac_S000_JT00_2015_tract.csv")
+
+#part3.2
+
+#store the wac data into a data frame for visualizing
+wacData <- read.csv("wa_wac_S000_JT00_2015_tract.csv")
+
+ggplot(wacData, aes(x=CR02, y=CE03))+geom_point()+scale_x_continuous(breaks = seq(0, 4000, 500))+scale_y_continuous(breaks = seq(0, 50000, 5000))+labs(title = "Jobs making over $3333/month over Number of Jobs for African Americans", x = "Number of Jobs for African Americans", y = "Number of Jobs Making Over $3333/month")
+
+ggplot(wacData, aes(x=CD04, y=CE03))+geom_point()+scale_x_continuous(breaks = seq(0, 40000, 2500))+scale_y_continuous(breaks = seq(0, 50000, 5000))+labs(title = "Jobs making over $3333/month over Number of Jobs for College Graduates", x = "Number of Jobs for College Graduates", y = "Number of Jobs Making over $3333/month")
+
+
+```
