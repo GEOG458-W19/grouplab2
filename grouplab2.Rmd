@@ -1,0 +1,199 @@
+---
+title: "Mapping Origin-Destination Data on Employment and Industy in the US"
+author: "Group 5 (Justin Han, Wendy Liang, Rachel Paresa, Alec Raines, Denny Wang)"
+date: "February 6, 2019"
+output: html_document
+---
+
+## Part 3 Visualizing and Mapping {.tabset .tabset-fade}
+
+### 3.1 Introduction
+This project will be investigating the employment statistics of Seattle, WA. 
+
+This data for this analysis is being gathered from the [Longitudinal Employer-Household Dynamics(LEHD)](https://lehd.ces.census.gov/data/#lodes) section from the United States Census Bureau. We will be specifically looking into the LEHD Origin-Destination Employment Statistics (LODES). There are three files we need to complete this: the Origin-Destination (OD), Residence Area Characteristics (RAC), and the Workplace Area Characteristics (WAC). Metadata for these files can be found [here](https://lehd.ces.census.gov/data/lodes/LODES7/LODESTechDoc7.3.pdf).
+
+* Definition of Each File
+  + Origin-Destination (OD): This file contains the relationships between where people reside, and where people go to work. 
+  + Residence Area Characteristics (RAC): This file contains the residential characteristics of a block.
+  + Workplace Area Characteristics (WAC): This file contains the workplace characteristics of a block.
+  
+The American decennial census is a massive undertaking that requires a large budget and years of planning. To account for a growing population and a large amount of data to be gathered, the budget for the census has increased "96% from 1997 to 1998, and more than 60% from 2007 to 2008"(brookings.edu). Following the pattern, the budget would need to rise again for the 2020 Census, however "Congress decreed that the 2020 Census should cost no more than the 2010 count without adjusting for inflation" is where the Census Bureau would run into problems ( [Shapiro, Robert](https://www.brookings.edu/blog/fixgov/2017/08/31/the-2020-census-may-be-wildly-inaccurate-and-it-matters-more-than-you-think/) ). This means cutting down on renting building and employees which can affect the accuracy of the census. Furthermore, the questions themselves can cause doubt in census findings. For example when considering race, the Census Bureau tested a question about reporting of origin race, and many people responded as having two origin races, for example mixed ethnicities like hispanic and white, under the census' terms, will be categorized as only hispanic ( [Alba, Richard](https://www.washingtonpost.com/news/monkey-cage/wp/2018/02/06/theres-a-big-problem-with-how-the-census-measures-race/?noredirect=on&utm_term=.22f4516ef859) ). 
+
+
+The area that we have chosen for analysis is the city of Seattle. We have chosen this area since all of us are familiar with the area, and also Seattle is a very large city with both urban and suburban elements. Analyzing the residential and workplace characteristics would show interesting patterns that people are unable to see from the surface. In the following visualizations, we can see that there are not many jobs that make over $3333/month ($40,000/year) for African Americans or College Graduates. For these two groups, this may be unappealing to move to the area to look for jobs, and they may look elsewhere. 
+
+### Works Cited
+
+[Shapiro, Robert. "The 2020 Census May Be Wildly Inaccurate-and It Matters More than You Think." Brookings.edu, The Brookings Institution, 31 Aug. 2017, www.brookings.edu/blog/fixgov/2017/08/31/the-2020-census-may-be-wildly-inaccurate-and-it-matters-more-than-you-think/.](https://www.brookings.edu/blog/fixgov/2017/08/31/the-2020-census-may-be-wildly-inaccurate-and-it-matters-more-than-you-think/)
+
+[Alba, Richard. "There's a Big Problem with How the Census Measures Race." The Washington Post, WP Company, 6 Feb. 2018, www.washingtonpost.com/news/monkey-cage/wp/2018/02/06/theres-a-big-problem-with-how-the-census-measures-race/?noredirect=on&utm_term=.22f4516ef859.](https://www.washingtonpost.com/news/monkey-cage/wp/2018/02/06/theres-a-big-problem-with-how-the-census-measures-race/?noredirect=on&utm_term=.22f4516ef859)
+
+## 3.2 Non-Spatial Visualizations
+
+```{r echo = FALSE, include = FALSE, warning = FALSE, message = FALSE}
+#***** PART 2: Data Processing *****#
+
+# Use library
+library(dplyr)
+library(reshape2)
+library(tidyverse)
+library(sf)
+library(tmap)
+
+##### WAC #####
+
+# Input WAC dataset and clean up table
+wac <- read.csv("data/wa_wac_S000_JT00_2015.csv", stringsAsFactors = FALSE, fileEncoding = "latin1")
+wac$w_geocode <- as.character(wac$w_geocode)
+wac$w_geocode[which(length(wac$w_geocode) == 14)] <- paste0("0", wac$w_geocode[which(length(wac$w_geocode) == 14)])
+wac$createdate <- NULL
+
+# Convert specific columns to numeric
+wacid <- 2:52
+wac[wacid] <- data.matrix(wac[wacid])
+sapply(wac, class)
+
+# Modify column for tract code
+wac$w_geocode <- substr(wac$w_geocode, 1, 11)
+
+# Aggregate by the tract_geocode column
+wac_tract_group <- aggregate(. ~ wac$w_geocode, data = wac[wacid], FUN = sum)
+
+# Create a new csv file for tracts
+write.csv(wac_tract_group, "wa_wac_S000_JT00_2015_tract.csv")
+
+##### RAC #####
+
+# Input RAC dataset and clean up table
+rac <- read.csv("data/wa_rac_S000_JT00_2015.csv", stringsAsFactors = FALSE, fileEncoding = "latin1")
+rac$h_geocode <- as.character(rac$h_geocode)
+rac$h_geocode[which(length(rac$h_geocode) == 14)] <- paste0("0", rac$h_geocode[which(length(rac$h_geocode) == 14)])
+rac$createdate <- NULL
+
+# Convert specific columns to numeric
+racid <- 2:42
+rac[racid] <- data.matrix(rac[racid])
+sapply(rac, class)
+
+# Modify column for tract code
+rac$h_geocode <- substr(rac$h_geocode, 1, 11)
+
+# Aggregate by the tract_geocode column
+rac_tract_group <- aggregate(. ~ rac$h_geocode, data = rac[racid], FUN = sum)
+
+# Create a new csv file for tracts
+write.csv(rac_tract_group, "data/wa_rac_S000_JT00_2015_tract.csv")
+
+##### OD #####
+
+# Input OD dataset and clean up table
+od <- read.csv("wa_od_main_JT00_2015.csv")
+od$w_geocode <- as.character(od$w_geocode)
+od$h_geocode <- as.character(od$h_geocode)
+od$createdate <- NULL
+
+# Convert specific columns to numeric
+odid <- 3:12
+od[odid] <- data.matrix(od[odid])
+sapply(od, class)
+
+# Modify column for tract code
+od$w_geocode <- substr(od$w_geocode, 1, 11)
+od$h_geocode <- substr(od$h_geocode, 1, 11)
+
+# Cast into matrix
+od_u <- unique(od[, 1:2])
+
+# Total number of jobs
+od_S000_matrix <- acast(od, w_geocode ~ h_geocode, value.var = "S000", fun.aggregate = sum)
+od_S000_matrix[is.na(od_S000_matrix)] <- 0
+
+# Number of jobs workers age 29 or younger
+od_SA01_matrix <- acast(od, w_geocode ~ h_geocode, value.var = "SA01", fun.aggregate = sum)
+od_SA01_matrix[is.na(od_SA01_matrix)] <- 0
+
+# Number of jobs workers age 30-54
+od_SA02_matrix <- acast(od, w_geocode ~ h_geocode, value.var = "SA02", fun.aggregate = sum)
+od_SA02_matrix[is.na(od_SA02_matrix)] <- 0
+
+# Number of jobs workers age 55 or older
+od_SA03_matrix <- acast(od, w_geocode ~ h_geocode, value.var = "SA03", fun.aggregate = sum)
+od_SA03_matrix[is.na(od_SA03_matrix)] <- 0
+
+# Number of jobs with earnings $1250/month or less
+od_SE01_matrix <- acast(od, w_geocode ~ h_geocode, value.var = "SE01", fun.aggregate = sum)
+od_SE01_matrix[is.na(od_SE01_matrix)] <- 0
+
+# Number of jobs with earnings $1251/month - $3333/month
+od_SE02_matrix <- acast(od, w_geocode ~ h_geocode, value.var = "SE02", fun.aggregate = sum)
+od_SE02_matrix[is.na(od_SE02_matrix)] <- 0
+
+# Number of jobs with earnings greater than $3333/month
+od_SE03_matrix <- acast(od, w_geocode ~ h_geocode, value.var = "SE03", fun.aggregate = sum)
+od_SE03_matrix[is.na(od_SE03_matrix)] <- 0
+
+# Number of jobs in Goods Producing industry sectors
+od_SI01_matrix <- acast(od, w_geocode ~ h_geocode, value.var = "SI01", fun.aggregate = sum)
+od_SI01_matrix[is.na(od_SI01_matrix)] <- 0
+
+# Number of jobs in Trade, Transportation, and Utilities industry sectors
+od_SI02_matrix <- acast(od, w_geocode ~ h_geocode, value.var = "SI02", fun.aggregate = sum)
+od_SI02_matrix[is.na(od_SI02_matrix)] <- 0
+
+# Number of jobs in all other service industry sectors
+od_SI03_matrix <- acast(od, w_geocode ~ h_geocode, value.var = "SI03", fun.aggregate = sum)
+od_SI03_matrix[is.na(od_SI03_matrix)] <- 0
+```
+
+``` {r echo = FALSE, include = TRUE, warning = FALSE}
+# Part 3.2
+
+# Store the wac data into a data frame for visualizing
+wacData <- read.csv("data/wa_wac_S000_JT00_2015_tract.csv")
+
+ggplot(wacData, aes(x = CR02, y = CE03)) + 
+  geom_point() + 
+  scale_x_continuous(breaks = seq(0, 4000, 500)) + 
+  scale_y_continuous(breaks = seq(0, 50000, 5000)) + 
+  labs(title = "Jobs making over $3333/month over Number of Jobs for African Americans", 
+       x = "Number of Jobs for African Americans", 
+       y = "Number of Jobs Making Over $3333/month")
+
+ggplot(wacData, aes(x = CD04, y = CE03)) + 
+  geom_point() + 
+  scale_x_continuous(breaks = seq(0, 40000, 2500)) + 
+  scale_y_continuous(breaks = seq(0, 50000, 5000)) + 
+  labs(title = "Jobs making over $3333/month over Number of Jobs for College Graduates", 
+       x = "Number of Jobs for College Graduates", 
+       y = "Number of Jobs Making over $3333/month")
+```
+
+# 3.3 Static Maps
+
+```{r echo = FALSE, include = FALSE, message = FALSE, warning = FALSE}
+shape_data <- st_read(dsn = "data/tl_2015_53_tract/tl_2015_53_tract.shp", stringsAsFactors = FALSE)
+wa_rac_data <- read.csv("data/wa_rac_S000_JT00_2015_tract.csv", stringsAsFactors = FALSE)
+# Creates new numeric column in shaped data called h_geocode
+shape_data$h_geocode <- as.numeric(shape_data$GEOID)
+
+# Creates a new column and adds data from C000 into Number_of_Jobs
+wa_rac_data$Number_of_Jobs <- wa_rac_data$C000
+# jJoin 2 tables by h_geocode column
+rac_shape_data <- left_join(shape_data, wa_rac_data, by = c("h_geocode" = "rac.h_geocode"))
+# Selects data in KC
+kc_rac_data <- subset(rac_shape_data, COUNTYFP %in% "033")
+# Rounds values in NAME
+kc_rac_data$rounded_NAME <- round(as.numeric(kc_rac_data$NAME))
+# Filters rounded_NAME to select tracts in seattle
+kc_rac_data2 <- subset(kc_rac_data, rounded_NAME %in% 1:300)
+```
+
+```{r echo = FALSE, include = TRUE, message = FALSE, warning = FALSE}
+# Creates the map of seattle
+tm_shape(kc_rac_data2) +
+  tm_fill(col = "Number_of_Jobs") + # Plots Number_of_Jobs
+  tm_borders() +
+  tm_layout(title = "King County Jobs", inner.margins = 0.2)
+```
+
+This map shows data from RAC from the column C000(Total Jobs) and a census tract shapefile. Seattle is divided into census tracts and each tract has RAC data associated with it. There seems to be slightly more jobs around downtown/north western part of Seattle compared to the other areas. This could be due to higher populations of people living there. 
