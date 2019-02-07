@@ -5,22 +5,23 @@ date: "February 6, 2019"
 output: html_document
 ---
 
-## Part 3 Visualizing and Mapping {.tabset .tabset-fade}
+# Part 3 Visualizing and Mapping 
 
-### 3.1 Introduction
+## 3.1 {.tabset .tabset-fade}
+### Introduction
 This project will be investigating the employment statistics of Seattle, WA. 
 
 This data for this analysis is being gathered from the [Longitudinal Employer-Household Dynamics(LEHD)](https://lehd.ces.census.gov/data/#lodes) section from the United States Census Bureau. We will be specifically looking into the LEHD Origin-Destination Employment Statistics (LODES). There are three files we need to complete this: the Origin-Destination (OD), Residence Area Characteristics (RAC), and the Workplace Area Characteristics (WAC). Metadata for these files can be found [here](https://lehd.ces.census.gov/data/lodes/LODES7/LODESTechDoc7.3.pdf).
 
 * Definition of Each File
   + Origin-Destination (OD): This file contains the relationships between where people reside, and where people go to work. 
-  + Residence Area Characteristics (RsAC): This file contains the residential characteristics of a block.
+  + Residence Area Characteristics (RAC): This file contains the residential characteristics of a block.
   + Workplace Area Characteristics (WAC): This file contains the workplace characteristics of a block.
   
 The American decennial census is a massive undertaking that requires a large budget and years of planning. To account for a growing population and a large amount of data to be gathered, the budget for the census has increased "96% from 1997 to 1998, and more than 60% from 2007 to 2008"(brookings.edu). Following the pattern, the budget would need to rise again for the 2020 Census, however "Congress decreed that the 2020 Census should cost no more than the 2010 count without adjusting for inflation" is where the Census Bureau would run into problems ( [Shapiro, Robert](https://www.brookings.edu/blog/fixgov/2017/08/31/the-2020-census-may-be-wildly-inaccurate-and-it-matters-more-than-you-think/) ). This means cutting down on renting building and employees which can affect the accuracy of the census. Furthermore, the questions themselves can cause doubt in census findings. For example when considering race, the Census Bureau tested a question about reporting of origin race, and many people responded as having two origin races, for example mixed ethnicities like hispanic and white, under the census' terms, will be categorized as only hispanic ( [Alba, Richard](https://www.washingtonpost.com/news/monkey-cage/wp/2018/02/06/theres-a-big-problem-with-how-the-census-measures-race/?noredirect=on&utm_term=.22f4516ef859) ). 
 
 
-The area that we have chosen for analysis is the city of Seattle. We have chosen this area since all of us are familiar with the area, and also Seattle is a very large city with both urban and suburban elements. Analyzing the residential and workplace characteristics would show interesting patterns that people are unable to see from the surface. In the following visualizations, we can see that there are not many jobs that make over $3333/month ($40,000/year) for African Americans or College Graduates. For these two groups, this may be unappealing to move to the area to look for jobs, and they may look elsewhere. In the maps following, we can also see that most jobs are located in Downtown Seattle and Northwestern Seattle. These are the most urbanized and highly populated areas, and the jobs will follow them there. 
+The area that we have chosen for analysis is the city of Seattle. We have chosen this area since all of us are familiar with the area, and also Seattle is a very large city with both urban and suburban elements. Analyzing the residential and workplace characteristics would show interesting patterns that people are unable to see from the surface. Further on, we'll narrow our datasets to mainly downtown Seattle to ensure that the maps will be accurately populated. This reason is also due to the high concentration of the number of jobs in that area.
 
 ### Works Cited
 
@@ -39,9 +40,11 @@ library(reshape2)
 library(tidyverse)
 library(sf)
 library(tmap)
+library(networkD3)
+library(parsetR)
 
-##### WAC #####
-
+# ##### WAC #####
+#
 # Input WAC dataset and clean up table
 wac <- read.csv("data/wa_wac_S000_JT00_2015.csv", stringsAsFactors = FALSE, fileEncoding = "latin1")
 wac$w_geocode <- as.character(wac$w_geocode)
@@ -145,27 +148,33 @@ od_SI03_matrix <- acast(od, w_geocode ~ h_geocode, value.var = "SI03", fun.aggre
 od_SI03_matrix[is.na(od_SI03_matrix)] <- 0
 ```
 
+In the following visualizations, we can see that there are not many jobs that make over $3333/month ($40,000/year) for African Americans or College Graduates. For these two groups, this may be unappealing to move to the area to look for jobs, and they may look elsewhere. In the maps following, we can also see that most jobs are located in Downtown Seattle and Northwestern Seattle. These are the most urbanized and highly populated areas, and the jobs will follow them there. 
+
 ``` {r echo = FALSE, include = TRUE, warning = FALSE}
 # Part 3.2
 
 # Store the wac data into a data frame for visualizing
 wacData <- read.csv("data/wa_wac_S000_JT00_2015_tract.csv")
 
-ggplot(wacData, aes(x = CR02, y = CE03)) + 
-  geom_point() + 
-  scale_x_continuous(breaks = seq(0, 4000, 500)) + 
-  scale_y_continuous(breaks = seq(0, 50000, 5000)) + 
-  labs(title = "Jobs making over $3333/month over Number of Jobs for African Americans", 
-       x = "Number of Jobs for African Americans", 
-       y = "Number of Jobs Making Over $3333/month")
+ggplot(wacData, aes(x = CR02, y = CE03)) +
+  geom_point() +
+  scale_x_continuous(breaks = seq(0, 4000, 500)) +
+  scale_y_continuous(breaks = seq(0, 50000, 5000)) +
+  labs(
+    title = "Jobs making over $3333/month over Number of Jobs for African Americans",
+    x = "Number of Jobs for African Americans",
+    y = "Number of Jobs Making Over $3333/month"
+  )
 
-ggplot(wacData, aes(x = CD04, y = CE03)) + 
-  geom_point() + 
-  scale_x_continuous(breaks = seq(0, 40000, 2500)) + 
-  scale_y_continuous(breaks = seq(0, 50000, 5000)) + 
-  labs(title = "Jobs making over $3333/month over Number of Jobs for College Graduates", 
-       x = "Number of Jobs for College Graduates", 
-       y = "Number of Jobs Making over $3333/month")
+ggplot(wacData, aes(x = CD04, y = CE03)) +
+  geom_point() +
+  scale_x_continuous(breaks = seq(0, 40000, 2500)) +
+  scale_y_continuous(breaks = seq(0, 50000, 5000)) +
+  labs(
+    title = "Jobs making over $3333/month over Number of Jobs for College Graduates",
+    x = "Number of Jobs for College Graduates",
+    y = "Number of Jobs Making over $3333/month"
+  )
 ```
 
 These visualizations look at race and college level in Seattle and comparing it to the income that comes with those jobs. With both of these, we can see that the majority of census tracts have low job opportunities for African Americans and College Graduates, there are some break away tracts however. One clear pattern with these scatterplots is that they both have a strong positive correlation.
@@ -195,32 +204,126 @@ kc_rac_data2 <- subset(kc_rac_data, rounded_NAME %in% 1:300)
 tm_shape(kc_rac_data2) +
   tm_fill(col = "Number_of_Jobs") + # Plots Number_of_Jobs
   tm_borders() +
-  tm_layout(title = "King County Jobs", inner.margins = 0.2)
+  tm_layout(title = "Seattle Jobs", inner.margins = 0.2) +
+  tm_legend(legend.position = c("left", "bottom"), title.position = c("center", "top"))
 ```
 
 This map shows data from RAC from the column C000(Total Jobs) and a census tract shapefile. Seattle is divided into census tracts and each tract has RAC data associated with it. There seems to be slightly more jobs around downtown/north western part of Seattle compared to the other areas. This could be due to higher populations of people living there. 
 
+From here, we can just focus and narrow down our data to the areas of downtown which are around the census tracts of 71-92:
+
+```{r echo = FALSE, include = TRUE, message = FALSE, warning = FALSE}
+# Narrows map to just a rough estimate of the downtown area
+downtown <- kc_rac_data2 %>%
+  filter(rounded_NAME >= 71, rounded_NAME <= 92, rounded_NAME != 78, rounded_NAME != 63, rounded_NAME != 89)
+
+tm_shape(downtown) +
+  tm_fill(col = "Number_of_Jobs", style = "cont", title = "Number of Jobs") + # Plots Number_of_Jobs
+  tm_borders() +
+  tm_layout(title = "Seattle Jobs (Downtown Focus)", inner.margins = 0.2) +
+  tm_legend(legend.position = c("left", "bottom"), title.position = c("center", "top"))
+
+# Finds highest/lowest values
+highest_dt <- downtown %>% filter(C000 == max(C000))
+lowest_dt <- downtown %>% filter(C000 == min(C000))
+```
+
+When we narrow it down to the downtown area, the tract with the highest number of jobs is `r highest_dt$NAMELSAD` (area between Capitol Hill and PPike/Pine Street) with `r highest_dt$C000` number of jobs whileas the tract with the lowest was `r lowest_dt$NAMELSAD` (bordering International District) with `r lowest_dt$C000` number of jobs.
+
 # 3.4 OD Data
 
-```{r}
-wa_od_data <- read.csv("od.csv", stringsAsFactors=FALSE)
-w_od_data<- dplyr::select(wa_od_data,Var1, Freq) # Data for wac
-h_od_data<-dplyr::select(wa_od_data,Var2,Freq) # Data for rac
+```{r echo = FALSE, include = TRUE, message = FALSE, warning = FALSE}
+wa_od_data <- read.csv("data/od.csv", stringsAsFactors = FALSE)
+# Data for wac
+w_od_data <- dplyr::select(wa_od_data, Var1, Freq)
+# Data for rac
+h_od_data <- dplyr::select(wa_od_data, Var2, Freq)
 
-
-wac_wod_shape_data <- left_join(shape_data,w_od_data,by=c("h_geocode"="Var1"))
-# Selects data in KC
-kc_wac_wod_data <- subset(wac_wod_shape_data,COUNTYFP %in% '033') 
+wac_wod_shape_data <- left_join(shape_data, w_od_data, by = c("h_geocode" = "Var1"))
+wac_hod_shape_data <- left_join(shape_data, h_od_data, by = c("h_geocode" = "Var2"))
+# sSelects data in KC
+kc_wac_wod_data <- subset(wac_wod_shape_data, COUNTYFP %in% "033")
+kc_wac_hod_data <- subset(wac_hod_shape_data, COUNTYFP %in% "033")
 # Rounds values in NAME
 kc_wac_wod_data$rounded_NAME <- round(as.numeric(kc_wac_wod_data$NAME))
+kc_wac_hod_data$rounded_NAME <- round(as.numeric(kc_wac_hod_data$NAME))
+
 # Filters rounded_NAME to select tracts in seattle
-kc_wac_wod_data2 <- subset(kc_wac_wod_data,rounded_NAME %in% 1:300) 
+kc_wac_wod_data2 <- subset(kc_wac_wod_data, rounded_NAME %in% 1:50)
+kc_wac_hod_data2 <- subset(kc_wac_hod_data, rounded_NAME %in% 1:50)
 
+# Looks just at downtown area so it's mappable
+downtown_od <- kc_wac_wod_data %>%
+  filter(rounded_NAME >= 71, rounded_NAME <= 92, rounded_NAME != 78, rounded_NAME != 63, rounded_NAME != 89)
 
+a <- subset(kc_wac_wod_data2, Freq %in% 1:10)
+b <- subset(kc_wac_hod_data2, Freq %in% 1:10)
 
-tm_shape(kc_wac_wod_data2) +
-  tm_fill(col="Freq") + # Plots Number_of_Jobs
+tm_shape(a) +
+  tm_fill(col = "Freq", style = "jenks") + # plots Number_of_Jobs
   tm_borders() +
   tm_layout(title = "Jobs Earning over $3333/month", inner.margins = 0.2)
 
+tm_shape(b) +
+  tm_fill(col = "Freq", style = "jenks") + # plots Number_of_Jobs
+  tm_borders() +
+  tm_layout(title = "Areas of People Who Earn Over $3333/month", inner.margins = 0.2)
 ```
+
+These map uses data from od.csv which contains data from the matrix that was created for frequency of jobs that pay over $3333/month. It plots the frequency for each tract in the downtown areas of Seattle.
+There are very few people in the northern parts of Seattle who make more then $3333/month and very few work places that have jobs where people can earn that much.
+
+## 3.5 Relationship Mapping
+
+```{r echo = FALSE, include = TRUE, message = FALSE, warning = FALSE}
+# Look at just the work/home relationships of downtown
+wh_od_downtown <- wa_od_data %>%
+  filter(Var1 %in% 53033007100:53033009200 & Var2 %in% 53033007100:53033009200) %>%
+  select(-X)
+wh_od_downtown <- wh_od_downtown %>% mutate(Work = Var1, Home = Var2) %>% select(Work, Home, Freq)
+highest_r_dt <- wh_od_downtown %>% filter(Freq == max(Freq)) %>% select(Work)
+highest_r_dt <- downtown_od %>% filter(h_geocode == highest_r_dt$Work) %>% select(NAMELSAD) %>% head(1)
+
+parset(wh_od_downtown,
+  dimensions = c("Work", "Home"),
+  value = htmlwidgets::JS("function(d){return d.Freq}"),
+  tension = 0.5,
+  width = "100%", height = 400
+)
+
+# Look at just the work/home relationships of the highest/lowest total jobs
+wh_od_high_low <- wa_od_data %>%
+  filter((Var1 == highest_dt$h_geocode & Var2 %in% 53033007100:53033009200) |
+    (Var1 == lowest_dt$h_geocode & Var2 %in% 53033007100:53033009200)) %>%
+  select(-X)
+wh_od_high_low <- wh_od_high_low %>% mutate(Work = Var1, Home = Var2) %>% select(Work, Home, Freq)
+highest_r_hl <- wh_od_high_low %>% filter(Freq == max(Freq)) %>% select(Work)
+highest_r_hl <- downtown_od %>% filter(h_geocode == highest_r_hl$Work) %>% select(NAMELSAD) %>% head(1)
+
+parset(wh_od_high_low,
+  dimensions = c("Work", "Home"),
+  value = htmlwidgets::JS("function(d){return d.Freq}"),
+  tension = 0.5,
+  width = "100%", height = 400
+)
+```
+
+Here, the relationships have been further filtered to only include the home destinations within the area of downtown Seattle. These two flow map shows the relationships of the people that work and live in the areas of downtown Seattle. The first flow map shows the work/home relationships of everyone working in downtown Seattle. The census tract, `r highest_r_dt$NAMELSAD`, has the highest relationship percentage for  when comparing all of downtown. The second flow map shows the relationship of the tract with the highest total number of jobs and the lowest total number of jobs which are `r highest_dt$NAMELSAD` which has the highest total number of jobs, and `r lowest_dt$NAMELSAD` which has the lowest total number of jobs.
+
+```{r echo = FALSE, include = TRUE, message = FALSE, warning = FALSE}
+# The census tracts of interest
+ctracts_interest <- downtown %>% filter(NAMELSAD == highest_r_dt$NAMELSAD |
+  NAMELSAD == highest_dt$NAMELSAD |
+  NAMELSAD == lowest_dt$NAMELSAD)
+
+tm_shape(downtown) +
+  tm_fill(col = "grey") +
+  tm_borders() +
+  tm_shape(ctracts_interest) +
+  tm_fill(col = "Number_of_Jobs", style = "cont", title = "Number of Jobs") + # Plots Number_of_Jobs
+  tm_borders() +
+  tm_layout(title = "Downtown Seattle - Census Tracts of Interest", inner.margins = 0.2) +
+  tm_legend(legend.position = c("left", "bottom"), title.position = c("center", "top"))
+```
+
+The map above highlights the tracts of interest from the 3 previously mentioned census tracts.
