@@ -2,6 +2,7 @@
 
 # Use library
 library(dplyr)
+library(reshape2)
 library(tidyverse)
 
 ##### WAC #####
@@ -47,6 +48,66 @@ rac_tract_group <- aggregate(. ~ rac$h_geocode, data = rac[racid], FUN = sum)
 
 # Create a new csv file for tracts
 write.csv(rac_tract_group, "wa_rac_S000_JT00_2015_tract.csv")
+
+##### OD #####
+
+# Input OD dataset and clean up table
+od <- read.csv("wa_od_main_JT00_2015.csv")
+od$w_geocode <- as.character(od$w_geocode)
+od$h_geocode <- as.character(od$h_geocode)
+od$createdate <- NULL
+
+# Convert specific columns to numeric
+odid <- 3:12
+od[odid] <-  data.matrix(od[odid])
+sapply(od, class)
+
+# Modify column for tract code
+od$w_geocode <- substr(od$w_geocode, 1, 11)
+od$h_geocode <- substr(od$h_geocode, 1, 11)
+
+# Cast into matrix
+od_u <- unique(od[,1:2])
+
+# Total number of jobs
+od_S000_matrix <- acast(od, w_geocode ~ h_geocode, value.var = "S000", fun.aggregate = sum)
+od_S000_matrix[is.na(od_S000_matrix)] = 0
+
+# Number of jobs workers age 29 or younger
+od_SA01_matrix <- acast(od, w_geocode ~ h_geocode, value.var = "SA01", fun.aggregate = sum)
+od_SA01_matrix[is.na(od_SA01_matrix)] = 0
+
+# Number of jobs workers age 30-54
+od_SA02_matrix <- acast(od, w_geocode ~ h_geocode, value.var = "SA02", fun.aggregate = sum)
+od_SA02_matrix[is.na(od_SA02_matrix)] = 0
+
+# Number of jobs workers age 55 or older 
+od_SA03_matrix <- acast(od, w_geocode ~ h_geocode, value.var = "SA03", fun.aggregate = sum)
+od_SA03_matrix[is.na(od_SA03_matrix)] = 0
+
+# Number of jobs with earnings $1250/month or less
+od_SE01_matrix <- acast(od, w_geocode ~ h_geocode, value.var = "SE01", fun.aggregate = sum)
+od_SE01_matrix[is.na(od_SE01_matrix)] = 0
+
+# Number of jobs with earnings $1251/month - $3333/month
+od_SE02_matrix <- acast(od, w_geocode ~ h_geocode, value.var = "SE02", fun.aggregate = sum)
+od_SE02_matrix[is.na(od_SE02_matrix)] = 0
+
+# Number of jobs with earnings greater than $3333/month
+od_SE03_matrix <- acast(od, w_geocode ~ h_geocode, value.var = "SE03", fun.aggregate = sum)
+od_SE03_matrix[is.na(od_SE03_matrix)] = 0
+
+# Number of jobs in Goods Producing industry sectors 
+od_SI01_matrix <- acast(od, w_geocode ~ h_geocode, value.var = "SI01", fun.aggregate = sum)
+od_SI01_matrix[is.na(od_SI01_matrix)] = 0
+
+# Number of jobs in Trade, Transportation, and Utilities industry sectors
+od_SI02_matrix <- acast(od, w_geocode ~ h_geocode, value.var = "SI02", fun.aggregate = sum)
+od_SI02_matrix[is.na(od_SI02_matrix)] = 0
+
+# Number of jobs in all other service industry sectors 
+od_SI03_matrix <- acast(od, w_geocode ~ h_geocode, value.var = "SI03", fun.aggregate = sum)
+od_SI03_matrix[is.na(od_SI03_matrix)] = 0
 
 #part3.2
 
