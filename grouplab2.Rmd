@@ -224,3 +224,4 @@ tm_shape(kc_wac_wod_data2) +
   tm_layout(title = "Jobs Earning over $3333/month", inner.margins = 0.2)
 
 ```
+This map uses data from od.csv which contains data from the matrix that was created for frequency of jobs that pay over $3333/month. It plots the frequency for each tract in Seattle. 
