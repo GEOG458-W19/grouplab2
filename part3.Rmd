@@ -115,9 +115,36 @@ kc_rac_data2<-subset(kc_rac_data,rounded_NAME %in% 1:300) #filters rounded_NAME 
 tm_shape(kc_rac_data2) +
   tm_fill(col="Number_of_Jobs") + #plots Number_of_Jobs
   tm_borders() +
-  tm_layout(title="King County Jobs", inner.margins=0.2)
+  tm_layout(title="Seattle Jobs", inner.margins=0.2)
 
 
 ```
 
 This map shows data from RAC from the column C000(Total Jobs) and a census tract shapefile. Seattle is divided into census tracts and each tract has RAC data associated with it. There seems to be slightly more jobs around downtown/north western part of Seattle compared to the other areas. This could be due to higher populations of people living there. 
+
+#Part 3.4
+
+```{r}
+wa_od_data <- read.csv("od.csv", stringsAsFactors=FALSE)
+w_od_data<- dplyr::select(wa_od_data,Var1, Freq)#data for wac
+h_od_data<-dplyr::select(wa_od_data,Var2,Freq)#data for rac
+
+
+wac_wod_shape_data <- left_join(shape_data,w_od_data,by=c("h_geocode"="Var1"))
+
+kc_wac_wod_data<-subset(wac_wod_shape_data,COUNTYFP %in% '033')#selects data in KC
+
+kc_wac_wod_data$rounded_NAME <- round(as.numeric(kc_wac_wod_data$NAME))#rounds values in NAME
+
+kc_wac_wod_data2<-subset(kc_wac_wod_data,rounded_NAME %in% 1:300) #filters rounded_NAME to select tracts in seattle
+
+
+
+tm_shape(kc_wac_wod_data2) +
+  tm_fill(col="Freq") + #plots Number_of_Jobs
+  tm_borders() +
+  tm_layout(title="Jobs Earning over $3333/month", inner.margins=0.2)
+
+
+
+```
