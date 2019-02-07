@@ -91,3 +91,32 @@ ggplot(wacData, aes(x=CD04, y=CE03))+geom_point()+scale_x_continuous(breaks = se
 
 
 ```
+
+#Part 3.3
+
+```{r}
+shape_data <- st_read(dsn = "tl_2015_53_tract.shp", stringsAsFactors=FALSE)
+wa_rac_data <- read.csv("wa_rac_S000_JT00_2015_tract.csv", stringsAsFactors=FALSE)
+shape_data$h_geocode <- as.numeric(shape_data$GEOID)#create new numeric column in shaped data called h_geocode
+
+#creates a new column and adds data from C000 into Number_of_Jobs
+wa_rac_data$Number_of_Jobs <- wa_rac_data$C000
+
+rac_shape_data <-left_join(shape_data,wa_rac_data, by=c("h_geocode"="rac.h_geocode"))#join 2 tables by h_geocode column
+
+kc_rac_data<-subset(rac_shape_data,COUNTYFP %in% '033')#selects data in KC
+
+kc_rac_data$rounded_NAME <- round(as.numeric(kc_rac_data$NAME))#rounds values in NAME
+
+kc_rac_data2<-subset(kc_rac_data,rounded_NAME %in% 1:300) #filters rounded_NAME to select tracts in seattle
+
+#creates the map of seattle
+tm_shape(kc_rac_data2) +
+  tm_fill(col="Number_of_Jobs") + #plots Number_of_Jobs
+  tm_borders() +
+  tm_layout(title="King County Jobs", inner.margins=0.2)
+
+
+```
+
+This map shows data from RAC from the column C000(Total Jobs) and a census tract shapefile. Seattle is divided into census tracts and each tract has RAC data associated with it. There seems to be slightly more jobs around downtown/north western part of Seattle compared to the other areas. This could be due to higher populations of people living there. 
