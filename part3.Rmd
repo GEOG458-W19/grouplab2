@@ -1,13 +1,13 @@
 ---
-title: "R Notebook"
-output:
-  html_document:
-    df_print: paged
+title: "Mapping Origin-Destination Data on Employment and Industy in the US"
+author: "Group 5 (Justin Han, Wendy Liang, Rachel Paresa, Alec Raines, Denny Wang)"
+date: "February 6, 2019"
+output: html_document
 ---
 
-#Part 3 Visualizing and Mapping
+## Part 3 Visualizing and Mapping {.tabset .tabset-fade}
 
-##3.1 Introduction
+### 3.1 Introduction
 This project will be investigating the employment statistics of Seattle, WA. 
 
 This data for this analysis is being gathered from the [Longitudinal Employer-Household Dynamics(LEHD)](https://lehd.ces.census.gov/data/#lodes) section from the United States Census Bureau. We will be specifically looking into the LEHD Origin-Destination Employment Statistics (LODES). There are three files we need to complete this: the Origin-Destination (OD), Residence Area Characteristics (RAC), and the Workplace Area Characteristics (WAC). Metadata for these files can be found [here](https://lehd.ces.census.gov/data/lodes/LODES7/LODESTechDoc7.3.pdf).
@@ -22,14 +22,15 @@ The American decennial census is a massive undertaking that requires a large bud
 
 The area that we have chosen for analysis is the city of Seattle. We have chosen this area since all of us are familiar with the area, and also Seattle is a very large city with both urban and suburban elements. Analyzing the residential and workplace characteristics would show interesting patterns that people are unable to see from the surface. In the following visualizations, we can see that there are not many jobs that make over $3333/month ($40,000/year) for African Americans or College Graduates. For these two groups, this may be unappealing to move to the area to look for jobs, and they may look elsewhere. 
 
-###Works Cited
+### Works Cited
 
 [Shapiro, Robert. "The 2020 Census May Be Wildly Inaccurate-and It Matters More than You Think." Brookings.edu, The Brookings Institution, 31 Aug. 2017, www.brookings.edu/blog/fixgov/2017/08/31/the-2020-census-may-be-wildly-inaccurate-and-it-matters-more-than-you-think/.](https://www.brookings.edu/blog/fixgov/2017/08/31/the-2020-census-may-be-wildly-inaccurate-and-it-matters-more-than-you-think/)
 
 [Alba, Richard. "There's a Big Problem with How the Census Measures Race." The Washington Post, WP Company, 6 Feb. 2018, www.washingtonpost.com/news/monkey-cage/wp/2018/02/06/theres-a-big-problem-with-how-the-census-measures-race/?noredirect=on&utm_term=.22f4516ef859.](https://www.washingtonpost.com/news/monkey-cage/wp/2018/02/06/theres-a-big-problem-with-how-the-census-measures-race/?noredirect=on&utm_term=.22f4516ef859)
 
-##3.2 Visualizations
-```{r echo=FALSE, warning=FALSE, message=FALSE}
+## 3.2 Visualizations
+
+```{r echo = FALSE, include = FALSE, warning = FALSE, message = FALSE}
 #***** PART 2: Data Processing *****#
 
 # Use library
@@ -79,10 +80,12 @@ rac_tract_group <- aggregate(. ~ rac$h_geocode, data = rac[racid], FUN = sum)
 
 # Create a new csv file for tracts
 write.csv(rac_tract_group, "wa_rac_S000_JT00_2015_tract.csv")
+```
 
-#part3.2
+``` {r echo = FALSE, include = TRUE, warning = FALSE}
+# Part 3.2
 
-#store the wac data into a data frame for visualizing
+# Store the wac data into a data frame for visualizing
 wacData <- read.csv("wa_wac_S000_JT00_2015_tract.csv")
 
 ggplot(wacData, aes(x=CR02, y=CE03))+geom_point()+scale_x_continuous(breaks = seq(0, 4000, 500))+scale_y_continuous(breaks = seq(0, 50000, 5000))+labs(title = "Jobs making over $3333/month over Number of Jobs for African Americans", x = "Number of Jobs for African Americans", y = "Number of Jobs Making Over $3333/month")

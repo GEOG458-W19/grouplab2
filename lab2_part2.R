@@ -48,12 +48,12 @@ rac_tract_group <- aggregate(. ~ rac$h_geocode, data = rac[racid], FUN = sum)
 # Create a new csv file for tracts
 write.csv(rac_tract_group, "wa_rac_S000_JT00_2015_tract.csv")
 
-#part3.2
+# Part 3.2
 
-#store the wac data into a data frame for visualizing
+# Store the wac data into a data frame for visualizing
 wacData <- read.csv("wa_wac_S000_JT00_2015_tract.csv")
 
-ggplot(wacData, aes(x=CR02, y=CE03))+geom_point()+scale_x_continuous(breaks = seq(0, 4000, 500))+scale_y_continuous(breaks = seq(0, 50000, 5000))+labs(title = "Jobs making over $3333/month over Number of Jobs for African Americans", x = "Number of Jobs for African Americans", y = "Number of Jobs Making Over $3333/month")
+ggplot(wacData, aes(x=CR02, y=CE03)) + geom_point() + scale_x_continuous(breaks = seq(0, 4000, 500))+scale_y_continuous(breaks = seq(0, 50000, 5000))+labs(title = "Jobs making over $3333/month over Number of Jobs for African Americans", x = "Number of Jobs for African Americans", y = "Number of Jobs Making Over $3333/month")
 
 ggplot(wacData, aes(x=CD04, y=CE03))+geom_point()+scale_x_continuous(breaks = seq(0, 40000, 2500))+scale_y_continuous(breaks = seq(0, 50000, 5000))+labs(title = "Jobs making over $3333/month over Number of Jobs for College Graduates", x = "Number of Jobs for College Graduates", y = "Number of Jobs Making over $3333/month")
 
